@@ -1,0 +1,27 @@
+# Visual Studio Code specific files
+.vscode/
+
+# Visual Studio specific files
+*.user
+*.suo
+*.cache
+*.csproj.user
+*.pdb
+*.dll
+*.exe
+
+# Build results
+bin/
+obj/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# AWS Lambda deployment artifacts
+aws-lambda-deployment/
+
+# Miscellaneous
+*.log
+*.swp
