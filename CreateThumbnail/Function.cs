@@ -2,9 +2,10 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.S3Events;
 using Amazon.S3;
 using Amazon.S3.Model;
-using LambdaFunctionsModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System.Text.Json;
+using LambdaFunctionsModels.Parameters;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -41,7 +42,7 @@ public class Function
     /// <param name="event">The event for the Lambda function handler to process.</param>
     /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
     /// <returns></returns>
-    public async Task<List<ImageS3Values>> FunctionHandler(S3Event @event, ILambdaContext context)
+    public async Task<string> FunctionHandler(S3Event @event, ILambdaContext context)
     {
         var result = new List<ImageS3Values>();
         var eventRecords = @event.Records ?? new List<S3Event.S3EventNotificationRecord>();
@@ -106,7 +107,13 @@ public class Function
             }
         }
 
-        return result;
+        var json = JsonSerializer.Serialize(new DynamoDBItem()
+        {
+            Value = result
+        });
+
+        context.Logger.LogInformation($"Thumbnail process result: {json}");
+        return json;
     }
     
     private async Task<Stream> GenerateThumbnailAsync(Stream originalImageStream)

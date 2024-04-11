@@ -1,4 +1,9 @@
-﻿namespace LambdaFunctionsModels;
+namespace LambdaFunctionsModels.Parameters;
+
+public class DynamoDBItem
+{
+    public List<ImageS3Values>? Value { get; set; }
+}
 
 public class ImageS3Values
 {

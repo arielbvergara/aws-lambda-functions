@@ -1,7 +1,8 @@
+using System.Text.Json;
 using Amazon.Lambda.Core;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
-using LambdaFunctionsModels;
+using LambdaFunctionsModels.Parameters;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -12,10 +13,19 @@ public class Function
 {
     private readonly IAmazonDynamoDB _dynamoDbClient = new AmazonDynamoDBClient();
 
-    public async Task FunctionHandler(List<ImageS3Values> imageS3Values, ILambdaContext context)
+    public async Task FunctionHandler(DynamoDBItem param, ILambdaContext context)
     {
-        foreach (var image in imageS3Values)
+        context.Logger.LogLine($"Starting CreateItemDynamoDB...{JsonSerializer.Serialize(param)}");
+
+        if (param.Value != null && !param.Value.Any())
+        {
+            context.Logger.LogLine($"Finishing CreateItemDynamoDB. No value sent.");
+            return;
+        }
+        
+        foreach (var image in param.Value)
         {   
+            context.Logger.LogLine($"Processing {image.ImageId}.");
             // Create DynamoDB item
             var item = new Dictionary<string, AttributeValue>
             {
@@ -36,5 +46,7 @@ public class Function
 
             context.Logger.LogLine($"Image { image.ImageId} added to DynamoDB successfully");
         }
+        
+        context.Logger.LogLine("Finishing CreateItemDynamoDB...");
     }
 }
