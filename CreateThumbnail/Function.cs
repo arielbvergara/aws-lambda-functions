@@ -2,6 +2,7 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.S3Events;
 using Amazon.S3;
 using Amazon.S3.Model;
+using LambdaFunctionsModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
@@ -40,8 +41,9 @@ public class Function
     /// <param name="event">The event for the Lambda function handler to process.</param>
     /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
     /// <returns></returns>
-    public async Task FunctionHandler(S3Event @event, ILambdaContext context)
+    public async Task<List<ImageS3Values>> FunctionHandler(S3Event @event, ILambdaContext context)
     {
+        var result = new List<ImageS3Values>();
         var eventRecords = @event.Records ?? new List<S3Event.S3EventNotificationRecord>();
         foreach (var record in eventRecords)
         {
@@ -78,7 +80,7 @@ public class Function
                 var putObjectRequest = new PutObjectRequest
                 {
                     BucketName = bucketName,
-                    Key = "thumbnails/" + objectKey.Replace("images/", ""), // Upload to a "thumbnails" folder
+                    Key = objectKey.Replace("images/", "thumbnails/"),
                     InputStream = thumbnailStream,
                     ContentType = "image/jpeg"
                 };
@@ -86,6 +88,13 @@ public class Function
                 var response = await S3Client.PutObjectAsync(putObjectRequest);
 
                 context.Logger.LogInformation($"Thumbnail created successfully. {response?.VersionId}");
+                
+                result.Add(new ImageS3Values()
+                {
+                    ImageId = Guid.NewGuid().ToString(),
+                    ImageUrl = objectKey,
+                    ImageThumbnailUrl = objectKey.Replace("images/", "thumbnails/")
+                });
             }
             catch (Exception e)
             {
@@ -96,6 +105,8 @@ public class Function
                 throw;
             }
         }
+
+        return result;
     }
     
     private async Task<Stream> GenerateThumbnailAsync(Stream originalImageStream)
